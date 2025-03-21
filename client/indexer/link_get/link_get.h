@@ -4,6 +4,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <boost/url.hpp>
 
 class LinksGetter {
 public:
@@ -20,4 +21,6 @@ private:
   std::regex htmlTag_;
   std::regex urlRegex_;
   void handleHtml();
+
+  std::string resolveUrl(const std::string& baseUrl, const std::string& relativeUrl);
 };

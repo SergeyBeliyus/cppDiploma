@@ -79,6 +79,15 @@ std::string getHtmlContent(const Link &link) {
       http::response<http::dynamic_body> res;
       http::read(stream, buffer, res);
 
+      // Обработка редиректов
+      if (res.result() == http::status::moved_permanently || res.result() == http::status::found) {
+        auto location = res.find(http::field::location);
+        if (location != res.end()) {
+          std::string newUrl = location->value();
+          return getHtmlContent(convertUrlToLink(newUrl)); // Рекурсивный вызов для перехода по редиректу
+        }
+      }
+
       if (isText(res.body().data())) {
         result = buffers_to_string(res.body().data());
       } else {

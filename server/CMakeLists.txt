@@ -9,12 +9,12 @@ add_library(engine
 )
 
 find_package(OpenSSL REQUIRED)
-target_compile_features(http_server PRIVATE cxx_std_17) 
-target_include_directories(http_server PRIVATE 
+target_compile_features(server PRIVATE cxx_std_17) 
+target_include_directories(server PRIVATE 
 	${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(http_server PUBLIC 
+target_link_libraries(server PUBLIC 
 	engine
 	pqxx
 	OpenSSL::SSL

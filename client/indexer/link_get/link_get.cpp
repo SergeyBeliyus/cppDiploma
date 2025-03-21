@@ -16,33 +16,34 @@ void LinksGetter::handleHtml() {
   std::smatch match;
   std::string::const_iterator searchStart(html_.cbegin());
   while (std::regex_search(searchStart, html_.cend(), match, htmlTag_)) {
-    std::string protocol, hostName, path;
     std::string url = match[1].str();
+
+    // Удаляем ссылки, начинающиеся с "javascript:"
+    if (url.find("javascript:") == 0) {
+      searchStart = match.suffix().first;
+      continue;
+    }
+
+    // Преобразуем относительные ссылки в абсолютные
+    if (url.find("http") != 0) { // Если ссылка не начинается с "http"
+      url = resolveUrl(getURL(), url);
+    }
+
+    // Проверяем, что ссылка корректна
     std::smatch urlMatch;
-
     if (std::regex_match(url, urlMatch, urlRegex_)) {
-      if (urlMatch.size() == 4) {
-        protocol = urlMatch[1].str();
-        hostName = urlMatch[2].str();
-        path = urlMatch[3].str();
+      std::string protocol = urlMatch[1].str();
+      std::string hostName = urlMatch[2].str();
+      std::string path = urlMatch[3].str();
+
+      if (path.empty()) {
+        path = "/";
       }
-    } else {
-      url = getProtocol(link_.protocol) + "://" + link_.hostName + link_.query +
-            url;
-      if (std::regex_match(url, urlMatch, urlRegex_)) {
-        if (urlMatch.size() == 4) {
-          protocol = urlMatch[1].str();
-          hostName = urlMatch[2].str();
-          path = urlMatch[3].str();
-        }
-      }
-    }
-    if (path.empty()) {
-      path = "/";
+
+      httputils::Link link(httputils::setProtocolType(protocol), hostName, path);
+      links_.push_back(link);
     }
 
-    httputils::Link link(httputils::setProtocolType(protocol), hostName, path);
-    links_.push_back(link);
     searchStart = match.suffix().first;
   }
 }
@@ -53,4 +54,11 @@ std::string LinksGetter::getURL() {
   const std::string URL =
       getProtocol(link_.protocol) + "://" + link_.hostName + link_.query;
   return URL;
+}
+
+std::string LinksGetter::resolveUrl(const std::string& baseUrl, const std::string& relativeUrl) {
+    boost::urls::url base(baseUrl);
+    boost::urls::url relative(relativeUrl);
+    base = boost::urls::resolve(base, relative);
+    return base.string();
 }
